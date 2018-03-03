@@ -3,17 +3,21 @@ import os
 import click
 import logging
 from dotenv import find_dotenv, load_dotenv
+import load_airport_data as airports
 
-
-@click.command()
-@click.argument('input_filepath', type=click.Path(exists=True))
-@click.argument('output_filepath', type=click.Path())
-def main(input_filepath, output_filepath):
+def main():
     """ Runs data processing scripts to turn raw data from (../raw) into
         cleaned data ready to be analyzed (saved in ../processed).
     """
     logger = logging.getLogger(__name__)
     logger.info('making final data set from raw data')
+    
+    logger.info('loading airport data')
+    path_to_db = 'sqlite:///data/interim/airlines.db'
+    airports.load_airport_data(path_to_db)
+    logger.info('handling flight data')
+    #flights_to_database.main(path_to_db)
+    #weather_to_database.main(path_to_db)
 
 
 if __name__ == '__main__':

@@ -78,12 +78,12 @@ target/
 # Jupyter NB Checkpoints
 .ipynb_checkpoints/
 
-# exclude data from source control by default
-# Keep all the .gitkeeps
+# Retain folder structure for data
 !/data/external/.gitkeep
 !/data/interim/.gitkeep
 !/data/processed/.gitkeep
 
+# Retain folder structure for raw data
 !/data/raw/.gitkeep
 !/data/raw/airports/.gitkeep
 /data/raw/airports/*.csv
