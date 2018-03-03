@@ -79,4 +79,17 @@ target/
 .ipynb_checkpoints/
 
 # exclude data from source control by default
-/data/
+# Keep all the .gitkeeps
+!/data/external/.gitkeep
+!/data/interim/.gitkeep
+!/data/processed/.gitkeep
+
+!/data/raw/.gitkeep
+!/data/raw/airports/.gitkeep
+/data/raw/airports/*.csv
+!/data/raw/flights/.gitkeep
+/data/raw/flights/*.csv
+!/data/raw/weather/.gitkeep
+/data/raw/weather/*.csv
+
+
