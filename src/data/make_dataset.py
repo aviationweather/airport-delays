@@ -5,6 +5,7 @@ import logging
 from dotenv import find_dotenv, load_dotenv
 import load_airport_data as airports
 import load_flight_data as flights
+import load_weather_data as weather
 
 def main():
     """ Runs data processing scripts to turn raw data from (../raw) into
@@ -16,9 +17,9 @@ def main():
     path_to_db = 'sqlite:///data/processed/airlines.db'
 
     logger.info('loading airport data')
-    airports.load_airport_data(path_to_db)
+    #airports.load_airport_data(path_to_db)
     logger.info('loading flight data')
-    flights.load_flight_data(path_to_db)
+    #flights.load_flight_data(path_to_db)
     logger.info('handling weather data')
     weather.load_weather_data(path_to_db)
 
