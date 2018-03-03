@@ -13,12 +13,14 @@ def main():
     logger = logging.getLogger(__name__)
     logger.info('making final data set from raw data')
     
+    path_to_db = 'sqlite:///data/processed/airlines.db'
+
     logger.info('loading airport data')
-    path_to_db = 'sqlite:///data/interim/airlines.db'
     airports.load_airport_data(path_to_db)
-    logger.info('handling flight data')
+    logger.info('loading flight data')
     flights.load_flight_data(path_to_db)
-    #weather_to_database.main(path_to_db)
+    logger.info('handling weather data')
+    weather.load_weather_data(path_to_db)
 
 
 if __name__ == '__main__':
