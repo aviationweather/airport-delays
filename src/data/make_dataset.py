@@ -1,11 +1,11 @@
 # -*- coding: utf-8 -*-
 import os
-import click
-import logging
 from dotenv import find_dotenv, load_dotenv
 import load_airport_data as airports
 import load_flight_data as flights
 import load_weather_data as weather
+import logging
+
 
 def main():
     """ Runs data processing scripts to turn raw data from (../raw) into
@@ -13,7 +13,7 @@ def main():
     """
     logger = logging.getLogger(__name__)
     logger.info('making final data set from raw data')
-    
+
     path_to_db = 'sqlite:///data/processed/airlines.db'
 
     logger.info('loading airport data')
