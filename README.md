@@ -27,7 +27,7 @@ Attributes of individual flights are available from the Bureau of Transportation
 
 ### Dataset: Weather Data
 
-Hourly weather measurements were pulled from the [Local Climatological Data (LCD)](https://www.ncdc.noaa.gov/cdo-web/datatools/lcd).  This data includes measured windspeed, precipitation, temperature and air pressure.  An overview of the file contents is available in the following [dictionary file](references/weather/DICTIONARY.md).
+Hourly weather measurements were pulled from the [Local Climatological Data (LCD)](https://www.ncdc.noaa.gov/cdo-web/datatools/lcd).  This data includes measured windspeed, precipitation, temperature and air pressure.  An overview of the file contents is available in the following [documentation](references/weather/lcd_weather_documentation.pdf).
 
 ## Current Approach
 
