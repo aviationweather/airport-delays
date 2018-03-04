@@ -1,74 +1,96 @@
 """
 Loads the weather data into sqlite database
 """
-import sys
-import pandas as pd
-import glob
-import random
-import datetime as datetime
-from sqlalchemy import create_engine
-from tqdm import tqdm
-import logging
-import data_helper as helper
 from collections import namedtuple
-import re
+import datetime as datetime
+import glob
+import logging
+import pandas as pd
+from sqlalchemy import create_engine
+import sys
+
 
 def identify_weather_features():
-    """ Returns a list of named tuples for each of the features in the dataframe """
+    """ Returns a list of named tuples for selected of the features  """
     Feature = namedtuple('Feature', ['raw_name', 'storage_name', 'dtype'])
     return [
-        Feature(raw_name='STATION', storage_name='station', dtype=str),
-        Feature(raw_name='STATION_NAME', storage_name='station_name', dtype=str),
-        Feature(raw_name='ELEVATION', storage_name='elevation', dtype=float),
-        Feature(raw_name='LATITUDE', storage_name='latitude', dtype=float),
-        Feature(raw_name='LONGITUDE', storage_name='longitude', dtype=float),
-        Feature(raw_name='DATE', storage_name='date', dtype=datetime.datetime),
-        Feature(raw_name='HOURLYVISIBILITY', storage_name='hourly_visibility', dtype=int),
-        Feature(raw_name='HOURLYDRYBULBTEMPF', storage_name='hourly_dry_bulb_temp_f', dtype=float),
-        Feature(raw_name='HOURLYWETBULBTEMPF', storage_name='hourly_wet_bulb_temp_f', dtype=float),
-        Feature(raw_name='HOURLYDewPointTempF', storage_name='hourly_dew_point_temp_f', dtype=float),
-        Feature(raw_name='HOURLYRelativeHumidity', storage_name='hourly_relative_humidity', dtype=int),
-        Feature(raw_name='HOURLYPrecip', storage_name='hourly_precipitation', dtype=float),
-        Feature(raw_name='HOURLYWindSpeed', storage_name='hourly_wind_speed', dtype=int),
-        Feature(raw_name='HOURLYWindDirection', storage_name='hourly_wind_direction', dtype=int),
-        Feature(raw_name='HOURLYWindGustSpeed', storage_name='hourly_wind_gust_speed', dtype=int),
-        Feature(raw_name='HOURLYStationPressure', storage_name='hourly_station_pressure', dtype=float)
+        Feature(raw_name='STATION',
+                storage_name='station', dtype=str),
+        Feature(raw_name='STATION_NAME',
+                storage_name='station_name', dtype=str),
+        Feature(raw_name='ELEVATION',
+                storage_name='elevation', dtype=float),
+        Feature(raw_name='LATITUDE',
+                storage_name='latitude', dtype=float),
+        Feature(raw_name='LONGITUDE',
+                storage_name='longitude', dtype=float),
+        Feature(raw_name='DATE',
+                storage_name='date', dtype=datetime.datetime),
+        Feature(raw_name='HOURLYVISIBILITY',
+                storage_name='hourly_visibility', dtype=int),
+        Feature(raw_name='HOURLYDRYBULBTEMPF',
+                storage_name='hourly_dry_bulb_temp_f', dtype=float),
+        Feature(raw_name='HOURLYWETBULBTEMPF',
+                storage_name='hourly_wet_bulb_temp_f', dtype=float),
+        Feature(raw_name='HOURLYDewPointTempF',
+                storage_name='hourly_dew_point_temp_f', dtype=float),
+        Feature(raw_name='HOURLYRelativeHumidity',
+                storage_name='hourly_relative_humidity', dtype=int),
+        Feature(raw_name='HOURLYPrecip',
+                storage_name='hourly_precipitation', dtype=float),
+        Feature(raw_name='HOURLYWindSpeed',
+                storage_name='hourly_wind_speed', dtype=int),
+        Feature(raw_name='HOURLYWindDirection',
+                storage_name='hourly_wind_direction', dtype=int),
+        Feature(raw_name='HOURLYWindGustSpeed',
+                storage_name='hourly_wind_gust_speed', dtype=int),
+        Feature(raw_name='HOURLYStationPressure',
+                storage_name='hourly_station_pressure', dtype=float)
     ]
+
 
 def parse_weather_data(file_name):
     """Convert a given weather csv into a dataframe for storage"""
     features = identify_weather_features()
     raw_feature_names = [f.raw_name for f in features]
     data = pd.read_csv(file_name, usecols=raw_feature_names, low_memory=False)
-    
+
     # Rename all features to storage name with snake_case
-    for feature in features:
-        data.rename(columns={feature.raw_name:feature.storage_name}, inplace=True)
-    
+    for f in features:
+        data.rename(columns={f.raw_name: f.storage_name}, inplace=True)
+
     # Precipitation of 'T' indicates trace amount, set to 0.001 rather than 0
-    data['hourly_precipitation'] = data['hourly_precipitation'].replace('T', 0.001)
-    
+    data['hourly_precipitation'].replace(to_replace='T', value=0.001,
+                                         inplace=True)
+
     # Handle conversion for features to specificed data types
-    for feature in features:
+    for f in features:
         # if an element cannot be converted to numeric, set to NA
-        if feature.dtype in [int, float]:
-            data[feature.storage_name] = pd.to_numeric(data[feature.storage_name], errors='coerce') 
+        if f.dtype in [int, float]:
+            data[f.storage_name] = \
+                pd.to_numeric(data[f.storage_name], errors='coerce')
+
         # convert datetime features
-        elif feature.dtype == datetime.datetime:
-            data[feature.storage_name] = pd.to_datetime(data[feature.storage_name], infer_datetime_format=True)
+        elif f.dtype == datetime.datetime:
+            data[f.storage_name] = \
+              pd.to_datetime(data[f.storage_name], infer_datetime_format=True)
         # handle string types
         else:
-            data[feature.storage_name] = data[feature.storage_name].astype(feature.dtype)
-   
+            data[f.storage_name] = data[f.storage_name].astype(f.dtype)
+
     # for missing wind gusts, assume zero
-    data['hourly_wind_gust_speed'] =  data['hourly_wind_gust_speed'].fillna(0)
-    # for missing precipitation, forward fill at most two records, fill remainder with 0
-    data['hourly_precipitation'] = data['hourly_precipitation'].fillna(method='ffill', limit=2)
-    data['hourly_precipitation'] = data['hourly_precipitation'].fillna(0)
-    # forward fill remainder of missing data 
+    data['hourly_wind_gust_speed'] = \
+        data['hourly_wind_gust_speed'].fillna(0)
+    # for missing precipitation, forward fill at most two records
+    data['hourly_precipitation'] = \
+        data['hourly_precipitation'].fillna(method='ffill', limit=2)
+    data['hourly_precipitation'] = \
+        data['hourly_precipitation'].fillna(0)
+    # forward fill remainder of missing data
     data = data.fillna(method='ffill')
 
     return data
+
 
 def load_csv_into_database(file_name, path_to_database):
     db_engine = create_engine(path_to_database)
@@ -77,9 +99,10 @@ def load_csv_into_database(file_name, path_to_database):
         data = parse_weather_data(file_name)
         data.to_sql('weather', connection, if_exists='append')
 
+
 def load_weather_data(path_to_database):
     logger = logging.getLogger(__name__)
-     # Reverse sort to load most recent years first
+    # Reverse sort to load most recent years first
     files = sorted(glob.glob("data/raw/weather/*.csv"))
 
     for f in files:
@@ -87,12 +110,14 @@ def load_weather_data(path_to_database):
         load_csv_into_database(f, path_to_database)
         logger.info('Complete...loading next file')
 
+
 def main():
     """ Parse first file, ensure parse occurs without error"""
     f = sorted(glob.glob("data/raw/weather/*.csv"))[0]
     data = parse_weather_data(f)
     print(data.info())
     print(data.head())
+
 
 if __name__ == '__main__':
     sys.exit(main())
