@@ -17,9 +17,9 @@ def main():
     path_to_db = 'sqlite:///data/processed/airlines.db'
 
     logger.info('loading airport data')
-    #airports.load_airport_data(path_to_db)
+    airports.load_airport_data(path_to_db)
     logger.info('loading flight data')
-    #flights.load_flight_data(path_to_db)
+    flights.load_flight_data(path_to_db)
     logger.info('handling weather data')
     weather.load_weather_data(path_to_db)
 

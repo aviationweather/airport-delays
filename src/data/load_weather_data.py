@@ -19,7 +19,7 @@ def identify_weather_features():
     return [
         Feature(raw_name='STATION', storage_name='station', dtype=str),
         Feature(raw_name='STATION_NAME', storage_name='station_name', dtype=str),
-        Feature(raw_name='ELEVATION', storage_name='elevation', dtype=str),
+        Feature(raw_name='ELEVATION', storage_name='elevation', dtype=float),
         Feature(raw_name='LATITUDE', storage_name='latitude', dtype=float),
         Feature(raw_name='LONGITUDE', storage_name='longitude', dtype=float),
         Feature(raw_name='DATE', storage_name='date', dtype=datetime.datetime),
@@ -28,6 +28,7 @@ def identify_weather_features():
         Feature(raw_name='HOURLYWETBULBTEMPF', storage_name='hourly_wet_bulb_temp_f', dtype=float),
         Feature(raw_name='HOURLYDewPointTempF', storage_name='hourly_dew_point_temp_f', dtype=float),
         Feature(raw_name='HOURLYRelativeHumidity', storage_name='hourly_relative_humidity', dtype=int),
+        Feature(raw_name='HOURLYPrecip', storage_name='hourly_precipitation', dtype=float),
         Feature(raw_name='HOURLYWindSpeed', storage_name='hourly_wind_speed', dtype=int),
         Feature(raw_name='HOURLYWindDirection', storage_name='hourly_wind_direction', dtype=int),
         Feature(raw_name='HOURLYWindGustSpeed', storage_name='hourly_wind_gust_speed', dtype=int),
@@ -36,22 +37,37 @@ def identify_weather_features():
 
 def parse_weather_data(file_name):
     """Convert a given weather csv into a dataframe for storage"""
-
     features = identify_weather_features()
     raw_feature_names = [f.raw_name for f in features]
-    data = pd.read_csv(file_name, usecols=raw_feature_names)
-
+    data = pd.read_csv(file_name, usecols=raw_feature_names, low_memory=False)
+    
+    # Rename all features to storage name with snake_case
     for feature in features:
         data.rename(columns={feature.raw_name:feature.storage_name}, inplace=True)
+    
+    # Precipitation of 'T' indicates trace amount, set to 0.001 rather than 0
+    data['hourly_precipitation'] = data['hourly_precipitation'].replace('T', 0.001)
+    
+    # Handle conversion for features to specificed data types
+    for feature in features:
+        # if an element cannot be converted to numeric, set to NA
         if feature.dtype in [int, float]:
             data[feature.storage_name] = pd.to_numeric(data[feature.storage_name], errors='coerce') 
+        # convert datetime features
         elif feature.dtype == datetime.datetime:
             data[feature.storage_name] = pd.to_datetime(data[feature.storage_name], infer_datetime_format=True)
+        # handle string types
         else:
-            data[feature.storage_name].astype(feature.dtype, copy=False)
+            data[feature.storage_name] = data[feature.storage_name].astype(feature.dtype)
    
+    # for missing wind gusts, assume zero
     data['hourly_wind_gust_speed'] =  data['hourly_wind_gust_speed'].fillna(0)
+    # for missing precipitation, forward fill at most two records, fill remainder with 0
+    data['hourly_precipitation'] = data['hourly_precipitation'].fillna(method='ffill', limit=2)
+    data['hourly_precipitation'] = data['hourly_precipitation'].fillna(0)
+    # forward fill remainder of missing data 
     data = data.fillna(method='ffill')
+
     return data
 
 def load_csv_into_database(file_name, path_to_database):
