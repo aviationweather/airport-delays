@@ -8,7 +8,6 @@ import glob
 import random
 import datetime as datetime
 from sqlalchemy import create_engine
-from tqdm import tqdm
 import logging
 
 def identify_flight_features():
@@ -24,7 +23,8 @@ def identify_flight_features():
         Feature('AirlineID', 'airline_id', str),
         Feature('TailNum', 'tail_number', str),
         Feature('Origin', 'origin', str),
-        Feature('OriginAirportID', 'origin_airpot_id', str),
+        Feature('OriginAirportID', 'origin_airport_id', str),
+        Feature('OriginAirportSeqID', 'origin_airport_sequence_id', str),
         Feature('Dest', 'dest', str),
         Feature('DestAirportID', 'dest_airport_id', str),
         Feature('CRSDepTime', 'departure_time_scheduled', datetime.time),
@@ -93,7 +93,7 @@ def load_csv_into_database(file_name, path_to_database):
     with db_engine.connect() as connection:
         reader = read_flight_data_from_csv(file_name, as_iterator=True, 
                                            chunksize=chunksize)
-        for chunk in tqdm(reader):
+        for chunk in reader:
             chunk = handle_flight_features(chunk)
             chunk.index += j
             i+=1

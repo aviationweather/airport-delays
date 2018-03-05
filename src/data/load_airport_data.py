@@ -7,7 +7,6 @@ import glob
 import random
 import numpy as np
 from sqlalchemy import create_engine
-from tqdm import tqdm
 import logging
 
 def get_column_dictionary():
@@ -36,8 +35,8 @@ def load_csv_into_database(file_name, path_to_database, logger):
     i, j = 0, 1
     logger.info(f"Uploading File: {file_name}")
     with db_engine.connect() as connection:
-        for df in tqdm(pd.read_csv(file_name, encoding='latin-1', usecols=column_type_dict.keys(), header=0, 
-                              delimiter=',', chunksize=chunksize, iterator=True, dtype=str)):
+        for df in pd.read_csv(file_name, encoding='latin-1', usecols=column_type_dict.keys(), header=0, 
+                              delimiter=',', chunksize=chunksize, iterator=True, dtype=str):
             df = df.rename(columns={c: c.replace(' ', '') for c in df.columns})
             for column_name, data_type in column_type_dict.items():
                 if data_type == int:
@@ -50,6 +49,8 @@ def load_csv_into_database(file_name, path_to_database, logger):
                     df[column_name] = pd.to_datetime(df[column_name], format='%Y-%m-%d')
             df.index += j
             i+=1
+            # set all columns to lower case
+            df.columns = map(str.lower, df.columns)
             df.to_sql('airports', connection, chunksize=chunksize, if_exists='append', index=False)
             j = df.index[-1] + 1
     logger.info(f"Upload Complete: {file_name}")
