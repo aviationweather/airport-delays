@@ -2,6 +2,7 @@
 Loads the flights data into sqlite database
 """
 import sys
+from collections import namedtuple
 import pandas as pd
 import glob
 import random
@@ -10,56 +11,114 @@ from sqlalchemy import create_engine
 from tqdm import tqdm
 import logging
 
-def get_column_dictionary():
-    """ Return a dictionary of columns and target data types. """
-    return {
-        'Year':int, 'Month':int, 'DayofMonth':int, 'DayOfWeek':int, 'FlightDate':datetime.date, 'UniqueCarrier':str,
-        'AirlineID':str, 'Carrier':str, 'TailNum':str, 'FlightNum':str, 
-        'OriginAirportID':str, 'OriginAirportSeqID':str,
-        'OriginCityMarketID':str, 'Origin':str, 'OriginCityName':str, 'OriginState':str, 'OriginStateFips':int,
-        'OriginStateName':str, 'OriginWac':int, 
-        'DestAirportID':str, 'DestAirportSeqID':str, 'DestCityMarketID':str,
-        'Dest':str, 'DestCityName':str, 'DestState':str, 'DestStateFips':int, 'DestStateName': str, 'DestWac':int,
-        'CRSDepTime':datetime.time, 'DepTime':datetime.time, 'DepDelay':float, 'DepDelayMinutes':float, 'DepDel15':bool,
-        'DepartureDelayGroups':int, 'DepTimeBlk':str, 'TaxiOut':float, 'WheelsOff':datetime.time, 'WheelsOn':datetime.time,
-        'TaxiIn':float, 'CRSArrTime':datetime.time, 'ArrTime':datetime.time, 'ArrDelay':float, 'ArrDelayMinutes':float,
-        'ArrDel15':bool, 'ArrivalDelayGroups':int, 'ArrTimeBlk':bool, 
-        'Cancelled':bool, 'CancellationCode':str, 'Diverted':bool, 
-        'CRSElapsedTime':float, 'ActualElapsedTime':float, 'AirTime':float, 
-        'Flights':float, 'Distance':float, 'DistanceGroup':int,
-        'CarrierDelay':float, 'WeatherDelay':float, 'NASDelay':float, 'SecurityDelay':float, 'LateAircraftDelay':float
-     }
+def identify_flight_features():
+    """ Return a dictionary of features for use from csv. """
+    Feature = namedtuple('Feature', ['raw_name', 'storage_name', 'dtype'])
+    return [
+        Feature('Year', 'year', int),
+        Feature('Month', 'month', int),
+        Feature('DayofMonth', 'day_of_month', int),
+        Feature('DayOfWeek', 'day_of_week', int),
+        Feature('FlightDate', 'flight_date', datetime.date),
+        Feature('UniqueCarrier', 'carrier', str),
+        Feature('AirlineID', 'airline_id', str),
+        Feature('TailNum', 'tail_number', str),
+        Feature('Origin', 'origin', str),
+        Feature('OriginAirportID', 'origin_airpot_id', str),
+        Feature('Dest', 'dest', str),
+        Feature('DestAirportID', 'dest_airport_id', str),
+        Feature('CRSDepTime', 'departure_time_scheduled', datetime.time),
+        Feature('DepTimeBlk', 'departure_time_block', str),
+        Feature('DepTime', 'departure_time_actual', datetime.time),
+        Feature('DepDelay', 'departure_delay', int),
+        Feature('DepDel15', 'departure_was_delayed_15', bool),
+        Feature('CRSArrTime', 'arrival_time_scheduled', datetime.time),
+        Feature('ArrTimeBlk', 'arrival_time_block', str),
+        Feature('ArrTime', 'arrival_time_actual', datetime.time),
+        Feature('ArrDelay', 'departure_delay', int),
+        Feature('ArrDel15', 'arrival_was_delayed_15', bool),
+        Feature('Cancelled', 'cancelled', bool),
+        Feature('CancellationCode', 'cancelled_code', str),
+        Feature('Diverted', 'diverted', bool),
+        Feature('CRSElapsedTime', 'elapsed_time_scheduled', int),
+        Feature('ActualElapsedTime', 'elapsed_time_acutal', int),
+        Feature('Distance', 'distance', int),
+        Feature('Flights', 'flights', int)
+    ]
+
+def read_flight_data_from_csv(file_name, as_iterator=False, chunksize=None):
+    """ Read the contents of a provided csv into a dataframe or iterator """
+    if as_iterator:
+        return pd.read_csv(file_name, encoding='latin-1', header=0, 
+                           delimiter=',', low_memory=False, iterator=True)
+    
+    return pd.read_csv(file_name, encoding='latin-1', low_memory=False,
+                       header=0, delimiter=',', iterator=False)
+
+
+def handle_flight_features(data):
+    """Transform raw data frame for storage or inspection"""
+    features = identify_flight_features()
+    selected_raw_features = [f.raw_name for f in features]
+    # downselect to subset of selected features
+    data = data.loc[:,selected_raw_features]
+
+    # rename all field in dataframe to appropriate 'storage_name' and cast type
+    for f in features:
+        data.rename(columns={f.raw_name: f.storage_name}, inplace=True)
+
+    for f in features:
+        if f.dtype is int:
+            data.loc[:,f.storage_name] = \
+                data[f.storage_name].fillna(0).astype(int)
+        if f.dtype is float:
+            data.loc[:,f.storage_name] = \
+                data[f.storage_name].fillna(0).astype(float)
+        if f.dtype is bool:
+            data.loc[:,f.storage_name] = \
+                data[f.storage_name].fillna(0).astype(bool)
+        if f.dtype is datetime.date:
+            data.loc[:,f.storage_name] = \
+                pd.to_datetime(data[f.storage_name], infer_datetime_format=True)
+        if f.dtype is datetime.time:
+            data.loc[:,f.storage_name] = \
+                 data[f.storage_name].fillna(0).astype(str)
+    return data
 
 def load_csv_into_database(file_name, path_to_database):
+    """Load a specified flight data file into local database, chunkwise"""
     db_engine = create_engine(path_to_database)
-    column_dict = get_column_dictionary()
     chunksize = 10000
     i, j = 0, 1
     with db_engine.connect() as connection:
-        reader = pd.read_csv(file_name, encoding='latin-1', usecols=column_dict.keys(), header=0, delimiter=',', chunksize=chunksize, iterator=True, dtype='str')
-        for df in tqdm(reader):
-            df = df.rename(columns={c: c.replace(' ', '') for c in df.columns}) 
-            for column_name, data_type in column_dict.items():
-                if data_type == int:
-                    df[column_name] = df[column_name].fillna(0).astype(data_type)
-                if data_type == float:
-                    df[column_name] = df[column_name].fillna(0).astype(data_type)
-                if data_type == datetime.date:
-                    df[column_name] = pd.to_datetime(df[column_name], format='%Y-%m-%d')
-                if data_type == datetime.time:
-                    df[column_name] = df[column_name].fillna(0).astype(str)
-
-            df.index += j
+        reader = read_flight_data_from_csv(file_name, as_iterator=True, 
+                                           chunksize=chunksize)
+        for chunk in tqdm(reader):
+            chunk = handle_flight_features(chunk)
+            chunk.index += j
             i+=1
-            df.to_sql('flights', connection, chunksize=chunksize, if_exists='append')
-            j = df.index[-1] + 1
+            chunk.to_sql('flights', connection, 
+                         chunksize=chunksize, if_exists='append')
+            j = chunk.index[-1] + 1
 
 def load_flight_data(path_to_database):
     logger = logging.getLogger(__name__)
      # Reverse sort to load most recent years first
-    files = sorted(glob.glob("data/raw/flights/On_Time_On_Time*.csv"), reverse=True)
+    files = sorted(glob.glob("data/raw/flights/On_Time_On_Time*.csv"), 
+                   reverse=True)
 
     for f in files:
         logger.info(f'Loading {f} into database')
         load_csv_into_database(f, path_to_database)
         logger.info('Complete...loading next file')
+
+def main():
+    """ Parse first file, ensure parse occurs without error"""
+    f = random.choice(glob.glob("data/raw/flights/*.csv"))
+    data = read_flight_data_from_csv(f)
+    data = handle_flight_features(data)
+    print(data.info())
+    print(data.head())
+
+if __name__ == '__main__':
+    sys.exit(main())
