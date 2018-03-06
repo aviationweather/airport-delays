@@ -73,6 +73,12 @@ def parse_weather_data(file_name):
     # forward fill remainder of missing data
     data = data.fillna(method='ffill')
 
+    # fuzzy match on weather measurements within the same 0.1 degrees lat and long
+    data['int_latitude'] = data['latitude'] * 10
+    data['int_latitude'] = data['int_latitude'].astype(int)
+    data['int_longitude'] = data['longitude'] * 10
+    data['int_longitude'] = data['int_longitude'].astype(int)
+
     return data
 
 

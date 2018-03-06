@@ -47,6 +47,13 @@ def load_csv_into_database(file_name, path_to_database, logger):
                     df[column_name] = pd.to_datetime(df[column_name], format='%Y-%m-%d')
                 if column_name == 'AIRPORT_THRU_DATE':
                     df[column_name] = pd.to_datetime(df[column_name], format='%Y-%m-%d')
+
+            # fuzzy match on weather measurements within the same 0.1 degrees lat and long
+            df['int_latitude'] = df['LATITUDE'] * 10
+            df['int_latitude'] = df['int_latitude'].astype(int)
+            df['int_longitude'] = df['LONGITUDE'] * 10
+            df['int_longitude'] = df['int_longitude'].astype(int)
+            
             df.index += j
             i+=1
             # set all columns to lower case
