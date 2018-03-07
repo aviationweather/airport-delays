@@ -9,6 +9,7 @@ import random
 import datetime as datetime
 from sqlalchemy import create_engine
 import logging
+import time
 
 def identify_flight_features():
     """ Return a dictionary of features for use from csv. """
@@ -27,14 +28,14 @@ def identify_flight_features():
         Feature('OriginAirportSeqID', 'origin_airport_sequence_id', str),
         Feature('Dest', 'dest', str),
         Feature('DestAirportID', 'dest_airport_id', str),
-        Feature('CRSDepTime', 'departure_time_scheduled', datetime.time),
+        Feature('CRSDepTime', 'departure_time_scheduled', 'time'),
         Feature('DepTimeBlk', 'departure_time_block', str),
-        Feature('DepTime', 'departure_time_actual', datetime.time),
+        Feature('DepTime', 'departure_time_actual', 'time'),
         Feature('DepDelay', 'departure_delay', int),
         Feature('DepDel15', 'departure_was_delayed_15', bool),
-        Feature('CRSArrTime', 'arrival_time_scheduled', datetime.time),
+        Feature('CRSArrTime', 'arrival_time_scheduled', 'time'),
         Feature('ArrTimeBlk', 'arrival_time_block', str),
-        Feature('ArrTime', 'arrival_time_actual', datetime.time),
+        Feature('ArrTime', 'arrival_time_actual', 'time'),
         Feature('ArrDelay', 'departure_delay', int),
         Feature('ArrDel15', 'arrival_was_delayed_15', bool),
         Feature('Cancelled', 'cancelled', bool),
@@ -55,6 +56,30 @@ def read_flight_data_from_csv(file_name, as_iterator=False, chunksize=None):
     return pd.read_csv(file_name, encoding='latin-1', low_memory=False,
                        header=0, delimiter=',', iterator=False)
 
+
+def infer_time(time_num):
+    """Generates a time delta based on int value"""
+    try:
+        time_str = str(int(time_num))
+    except:
+        time_str = "0000"
+
+    if time_str == '2400':
+        time_str = '2359'
+    if time_str == '0':
+        time_str = '0001'
+
+    out_time = time.strptime('0000', '%H%M')
+    try:
+        out_time = time.strptime(time_str, '%H%M')
+    except ValueError:
+        if time_str is not '00':
+            out_time = time.strptime(time_str, '%M')
+    except:
+        out_time = time.strptime('0000', '%H%M')
+
+    time_delta = datetime.timedelta(hours=out_time.tm_hour, minutes=out_time.tm_min)
+    return time_delta
 
 def handle_flight_features(data):
     """Transform raw data frame for storage or inspection"""
@@ -80,9 +105,15 @@ def handle_flight_features(data):
         if f.dtype is datetime.date:
             data.loc[:,f.storage_name] = \
                 pd.to_datetime(data[f.storage_name], infer_datetime_format=True)
-        if f.dtype is datetime.time:
+
+    # Only handle time after flight_date is successfully converted
+    for f in features:
+         if f.dtype is 'time':
+            time_deltas = data[f.storage_name].apply(infer_time)
+
             data.loc[:,f.storage_name] = \
-                 data[f.storage_name].fillna(0).astype(str)
+                 data.loc[:,'flight_date'] + time_deltas
+    
     return data
 
 def load_csv_into_database(file_name, path_to_database):
@@ -119,6 +150,7 @@ def main():
     data = handle_flight_features(data)
     print(data.info())
     print(data.head())
+    print(data[['flight_date', 'departure_time_scheduled']])
 
 if __name__ == '__main__':
     sys.exit(main())
