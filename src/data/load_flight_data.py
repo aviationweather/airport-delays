@@ -11,6 +11,7 @@ from sqlalchemy import create_engine
 import logging
 import time
 
+
 def identify_flight_features():
     """ Return a dictionary of features for use from csv. """
     Feature = namedtuple('Feature', ['raw_name', 'storage_name', 'dtype'])
@@ -47,12 +48,13 @@ def identify_flight_features():
         Feature('Flights', 'flights', int)
     ]
 
+
 def read_flight_data_from_csv(file_name, as_iterator=False, chunksize=None):
     """ Read the contents of a provided csv into a dataframe or iterator """
     if as_iterator:
-        return pd.read_csv(file_name, encoding='latin-1', header=0, 
+        return pd.read_csv(file_name, encoding='latin-1', header=0,
                            delimiter=',', low_memory=False, iterator=True)
-    
+
     return pd.read_csv(file_name, encoding='latin-1', low_memory=False,
                        header=0, delimiter=',', iterator=False)
 
@@ -61,7 +63,7 @@ def infer_time(time_num):
     """Generates a time delta based on int value"""
     try:
         time_str = str(int(time_num))
-    except:
+    except Exception:
         time_str = "0000"
 
     if time_str == '2400':
@@ -75,46 +77,50 @@ def infer_time(time_num):
     except ValueError:
         if time_str is not '00':
             out_time = time.strptime(time_str, '%M')
-    except:
+    except Exception:
         out_time = time.strptime('0000', '%H%M')
 
-    time_delta = datetime.timedelta(hours=out_time.tm_hour, minutes=out_time.tm_min)
+    time_delta = datetime.timedelta(hours=out_time.tm_hour,
+                                    minutes=out_time.tm_min)
     return time_delta
+
 
 def handle_flight_features(data):
     """Transform raw data frame for storage or inspection"""
     features = identify_flight_features()
     selected_raw_features = [f.raw_name for f in features]
     # downselect to subset of selected features
-    data = data.loc[:,selected_raw_features]
+    data = data.loc[:, selected_raw_features]
 
-    # rename all field in dataframe to appropriate 'storage_name' and cast type
+    # rename all field in dataframe to appropriate 'storage_name' type
     for f in features:
         data.rename(columns={f.raw_name: f.storage_name}, inplace=True)
 
     for f in features:
         if f.dtype is int:
-            data.loc[:,f.storage_name] = \
+            data.loc[:, f.storage_name] = \
                 data[f.storage_name].fillna(0).astype(int)
         if f.dtype is float:
-            data.loc[:,f.storage_name] = \
+            data.loc[:, f.storage_name] = \
                 data[f.storage_name].fillna(0).astype(float)
         if f.dtype is bool:
-            data.loc[:,f.storage_name] = \
+            data.loc[:, f.storage_name] = \
                 data[f.storage_name].fillna(0).astype(bool)
         if f.dtype is datetime.date:
-            data.loc[:,f.storage_name] = \
-                pd.to_datetime(data[f.storage_name], infer_datetime_format=True)
+            data.loc[:, f.storage_name] = \
+                pd.to_datetime(data[f.storage_name],
+                               infer_datetime_format=True)
 
     # Only handle time after flight_date is successfully converted
     for f in features:
-         if f.dtype is 'time':
+        if f.dtype is 'time':
             time_deltas = data[f.storage_name].apply(infer_time)
 
-            data.loc[:,f.storage_name] = \
-                 data.loc[:,'flight_date'] + time_deltas
-    
+            data.loc[:, f.storage_name] = \
+                data.loc[:, 'flight_date'] + time_deltas
+
     return data
+
 
 def load_csv_into_database(file_name, path_to_database):
     """Load a specified flight data file into local database, chunkwise"""
@@ -122,26 +128,28 @@ def load_csv_into_database(file_name, path_to_database):
     chunksize = 10000
     i, j = 0, 1
     with db_engine.connect() as connection:
-        reader = read_flight_data_from_csv(file_name, as_iterator=True, 
+        reader = read_flight_data_from_csv(file_name, as_iterator=True,
                                            chunksize=chunksize)
         for chunk in reader:
             chunk = handle_flight_features(chunk)
             chunk.index += j
-            i+=1
-            chunk.to_sql('flights', connection, 
+            i += 1
+            chunk.to_sql('flights', connection,
                          chunksize=chunksize, if_exists='append')
             j = chunk.index[-1] + 1
 
+
 def load_flight_data(path_to_database):
     logger = logging.getLogger(__name__)
-     # Reverse sort to load most recent years first
-    files = sorted(glob.glob("data/raw/flights/On_Time_On_Time*.csv"), 
+    # Reverse sort to load most recent years first
+    files = sorted(glob.glob("data/raw/flights/On_Time_On_Time*.csv"),
                    reverse=True)
 
     for f in files:
         logger.info(f'Loading {f} into database')
         load_csv_into_database(f, path_to_database)
         logger.info('Complete...loading next file')
+
 
 def main():
     """ Parse first file, ensure parse occurs without error"""
@@ -151,6 +159,7 @@ def main():
     print(data.info())
     print(data.head())
     print(data[['flight_date', 'departure_time_scheduled']])
+
 
 if __name__ == '__main__':
     sys.exit(main())
