@@ -49,7 +49,7 @@ def main():
 
     start_date = date(2017, 1, 1)
     end_date = date(2017, 12, 31)
-    airport_code = 'MDT'
+    airport_code = 'LAX'
     path_to_db = get_database_connection_string()
 
     features = get_features_for_delay_classification(

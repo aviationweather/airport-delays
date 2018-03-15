@@ -58,7 +58,7 @@ def build_features_for_departing_flights(start_date=None, end_date=None,
 def main():
     start_date = date(2017, 1, 1)
     end_date = date(2017, 12, 31)
-    airport_code = 'MDT'
+    airport_code = 'LAX'
     path_to_db = helpers.get_database_connection_string()
 
     features = build_features_for_departing_flights(start_date,

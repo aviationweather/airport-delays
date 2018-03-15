@@ -73,7 +73,7 @@ def main():
     """ Build featureset for departing flights, print to console"""
     start_date = date(2017, 1, 1)
     end_date = date(2017, 12, 31)
-    airport_code = 'MDT'
+    airport_code = 'LAX'
     path_to_db = helpers.get_database_connection_string()
 
     features = get_weather_features(start_date, end_date,

@@ -29,6 +29,10 @@ requirements: test_environment
 data: requirements
 	$(PYTHON_INTERPRETER) src/data/make_dataset.py
 
+## Make Features for Analysis
+features:
+	$(PYTHON_INTERPRETER) src/features/make_prepared_features.py
+
 ## Delete all compiled Python files
 clean:
 	find . -type f -name "*.py[co]" -delete

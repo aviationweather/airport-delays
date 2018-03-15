@@ -11,7 +11,7 @@ The objective of this analysis is to examine the relationships between flight de
 - Comparison and contrast of domestic airports along high-level performance metrics
 - Prediction of airport delays at a selected regional airport
 
-The aggregation of these components is intended to provide consumers an opportunity to understand how domestic airports are performing relative to one another, and reducing travel discomfort by proactively identifying flights that are likely to be delayed or canceled.  In this particular case, my focus will be [Harrisburg International Airport](http://www.flyhia.com/).
+The aggregation of these components is intended to provide consumers an opportunity to understand how domestic airports are performing relative to one another, and reducing travel discomfort by proactively identifying flights that are likely to be delayed or canceled. Initially my focus will be on 2017 flights departing from LAX, ATL and MDT.
 
 ## Data
 
@@ -27,7 +27,7 @@ Attributes of individual flights are available from the Bureau of Transportation
 
 ### Dataset: Weather Data
 
-Hourly weather measurements were pulled from the [Local Climatological Data (LCD)](https://www.ncdc.noaa.gov/cdo-web/datatools/lcd).  This data includes measured windspeed, precipitation, temperature and air pressure.  An overview of the file contents is available in the following [documentation](references/weather/lcd_weather_documentation.pdf).
+Hourly weather measurements were pulled from the [Local Climatological Data (LCD)](https://www.ncdc.noaa.gov/cdo-web/datatools/lcd).  This data includes measured wind speed, precipitation, temperature and air pressure.  An overview of the file contents is available in the following [documentation](references/weather/lcd_weather_documentation.pdf).
 
 ## Current Approach
 
@@ -43,7 +43,7 @@ make requirements
 
 ### Data Acquisition
 
-After download raw csv's can be placed in the corresponding location.
+After download raw csv's should be placed in the corresponding location.
 
 - Airports: `/data/raw/airports/`
 - Flights:  `/data/raw/flights/`
@@ -68,7 +68,7 @@ BUCKET = put-your-custom-bucket-name-here
 
 ### Data Wrangling
 
-After download, the raw CSV files were processed by a series of scripts aggregated in the script `make_dataset.py`.  The processing results in an aggregation of the data into a SQLite database `/data/processed/airlines.db`.  This process can be run with the command:
+After download, the raw CSV files were processed by a series of scripts aggregated in the script `make_dataset.py`.  The processing results in an aggregation of the data into an SQLite database `/data/processed/airlines.db`.  This process can be run with the command:
 
 ```shell
 make data
@@ -76,11 +76,15 @@ make data
 
 ### Exploratory Data Analysis
 
-ToDo
+Notebooks outlining the initial data analysis can be found in the `./notebooks/eda/` directory.
 
-## Deliverables
+### Feature Generation
 
-ToDo
+After data is loaded into the local repository, a set of prepared data features for modeling can be generated with the following command.  The generated features will be stored in `./data/processed/airlines.db`.
+
+```shell
+make features
+```
 
 ## Project Organization
 
@@ -129,6 +133,5 @@ ToDo
     │       └── visualize.py
     │
     └── tox.ini            <- tox file with settings for running tox; see tox.testrun.org
-
 
 <p><small>Project based on the <a target="_blank" href="https://drivendata.github.io/cookiecutter-data-science/">cookiecutter data science project template</a>. #cookiecutterdatascience</small></p>
