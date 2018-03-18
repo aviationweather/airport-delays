@@ -11,7 +11,7 @@ The objective of this analysis is to examine the relationships between flight de
 - Comparison and contrast of domestic airports along high-level performance metrics
 - Prediction of airport delays at a selected regional airport
 
-The aggregation of these components is intended to provide consumers an opportunity to understand how domestic airports are performing relative to one another, and reducing travel discomfort by proactively identifying flights that are likely to be delayed or canceled. Initially my focus will be on 2017 flights departing from LAX, ATL and MDT.
+The aggregation of these components is intended to provide consumers an opportunity to understand how domestic airports are performing relative to one another, and reducing travel discomfort by proactively identifying flights that are likely to be delayed or canceled. Initially, my focus will be on 2017 flights departing from LAX, ATL, and MDT.
 
 ## Data
 
@@ -85,6 +85,15 @@ After data is loaded into the local repository, a set of prepared data features 
 ```shell
 make features
 ```
+
+### Outputs
+
+The following short posts are based on this project:
+
+- Exploratory Data Analysis: Does it matter when I fly?
+  - [https://bcbeidel.github.io/2018/03/17/does-it-matter-when-i-fly/](https://bcbeidel.github.io/2018/03/17/does-it-matter-when-i-fly/)
+- Classification with Scikit-learn: Predicting Flight Delays
+  - [https://bcbeidel.github.io/2018/03/18/predicting-flight-delays/](https://bcbeidel.github.io/2018/03/18/predicting-flight-delays/)
 
 ## Project Organization
 
