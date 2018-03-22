@@ -10,6 +10,7 @@ import datetime as datetime
 from sqlalchemy import create_engine
 import logging
 import time
+import data_helpers as helpers
 
 
 def identify_flight_features():
@@ -119,6 +120,11 @@ def handle_flight_features(data):
             data.loc[:, f.storage_name] = \
                 data.loc[:, 'flight_date'] + time_deltas
 
+    # Append a 'scheduled_departure_hour' to dataframe
+    data['departure_hour_scheduled'] = \
+        data['departure_time_scheduled'].apply(helpers.round_to_hour)
+    data['arrival_hour_scheduled'] = \
+        data['arrival_time_scheduled'].apply(helpers.round_to_hour)
     return data
 
 
@@ -158,7 +164,9 @@ def main():
     data = handle_flight_features(data)
     print(data.info())
     print(data.head())
-    print(data[['flight_date', 'departure_time_scheduled']])
+    print(data[['flight_date', \
+                'departure_time_scheduled', 'departure_hour_scheduled', \
+                'arrival_time_scheduled', 'arrival_hour_scheduled']])
 
 
 if __name__ == '__main__':
