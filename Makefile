@@ -31,7 +31,6 @@ data: requirements
 
 ## Make Features for Analysis
 features:
-	$(PYTHON_INTERPRETER) src/features/make_prepared_features.py
 	$(PYTHON_INTERPRETER) src/features/generate_congestion_features.py
 
 ## Delete all compiled Python files
