@@ -38,7 +38,7 @@ def identify_flight_features():
         Feature('CRSArrTime', 'arrival_time_scheduled', 'time'),
         Feature('ArrTimeBlk', 'arrival_time_block', str),
         Feature('ArrTime', 'arrival_time_actual', 'time'),
-        Feature('ArrDelay', 'departure_delay', int),
+        Feature('ArrDelay', 'arrival_delay', int),
         Feature('ArrDel15', 'arrival_was_delayed_15', bool),
         Feature('Cancelled', 'cancelled', bool),
         Feature('CancellationCode', 'cancelled_code', str),
