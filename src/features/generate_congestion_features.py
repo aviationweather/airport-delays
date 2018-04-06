@@ -13,8 +13,8 @@ CREATE_ARRIVAL_FEATURES_TABLE = """
         arrival_airport_id INTEGER NOT NULL,
         scheduled_arrival_hour DATETIME NOT NULL,
         scheduled_arrivals INTEGER NOT NULL,
-        cancelled_arrivals INTEGER NOT NULL,
-        delayed_arrivals INTEGER NOT NULL,
+        fraction_cancelled_arrivals DOUBLE NOT NULL,
+        fraction_delayed_arrivals DOUBLE NOT NULL,
         average_delay_arrivals INTEGER NOT NULL
     );
 """
@@ -25,8 +25,8 @@ GENERATE_ARRIVAL_FEATURES = """
         f.dest_airport_id AS arrival_airport_id,
         f.arrival_hour_scheduled AS scheduled_arrival_hour,
         SUM(f.flights) AS scheduled_arrivals,
-        SUM(f.cancelled) AS cancelled_arrivals,
-        SUM(f.arrival_was_delayed_15) AS delayed_arrivals,
+        SUM(f.cancelled) / SUM(f.flights) AS fraction_cancelled_arrivals,
+        SUM(f.arrival_was_delayed_15) / SUM(f.flights) AS fraction_delayed_arrivals,
         CASE 
             WHEN SUM(f.arrival_was_delayed_15) > 0 
                 THEN SUM(f.arrival_delay) / SUM(f.arrival_was_delayed_15) 
@@ -48,8 +48,8 @@ CREATE_DEPARTURE_FEATURES_TABLE = """
         departure_airport_id INTEGER NOT NULL,
         scheduled_departure_hour DATETIME NOT NULL,
         scheduled_departures INTEGER NOT NULL,
-        cancelled_departures INTEGER NOT NULL,
-        departures_delayed INTEGER NOT NULL,
+        fraction_cancelled_departures DOUBLE NOT NULL,
+        fraction_departures_delayed DOUBLE NOT NULL,
         average_delay_departures INTEGER NOT NULL
     );
 """
@@ -57,11 +57,11 @@ CREATE_DEPARTURE_FEATURES_TABLE = """
 GENERATE_DEPARTURE_FEATURES = """
     INSERT INTO departure_features 
     SELECT 
-    f.origin_airport_id as departure_airport_id,
+        f.origin_airport_id as departure_airport_id,
         f.departure_hour_scheduled as scheduled_departure_hour,
         SUM(f.flights) as scheduled_departures,
-        SUM(f.cancelled) as cancelled_departures,
-        SUM(f.departure_was_delayed_15) as departures_delayed,
+        SUM(f.cancelled) / SUM(f.flights) as fraction_cancelled_departures,
+        SUM(f.departure_was_delayed_15) / SUM(f.flights) as fraction_departures_delayed,
         CASE 
             WHEN SUM(f.departure_was_delayed_15) > 0 
                 THEN SUM(f.departure_delay) / SUM(f.departure_was_delayed_15) 
