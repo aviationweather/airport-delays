@@ -4,6 +4,7 @@ import os
 import numpy as np
 import pandas as pd
 from datetime import timedelta
+from sqlalchemy import create_engine
 
 
 def find(name, path):
@@ -35,3 +36,10 @@ def shift_back_hours(ts, hours=3):
 
 def exclude_datetime_features(data):
     return data.select_dtypes(exclude=[np.datetime64])
+
+
+def execute_statement(statement, path_to_db):
+    engine = create_engine(path_to_db)
+    with engine.connect() as conn:
+        result = conn.execute(statement)
+    return result
