@@ -29,9 +29,14 @@ requirements: test_environment
 data: requirements
 	$(PYTHON_INTERPRETER) src/data/make_dataset.py
 
+## Make Features For Initial Analysis with weather
+features_weather:
+	$(PYTHON_INTERPRETER) src/data/make_prepared_features_weather_analysis.py
+   
 ## Make Features for Analysis
 features:
 	$(PYTHON_INTERPRETER) src/features/generate_congestion_features.py
+
 
 ## Delete all compiled Python files
 clean:
