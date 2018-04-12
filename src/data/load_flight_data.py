@@ -123,8 +123,31 @@ def handle_flight_features(data):
     # Append a 'scheduled_departure_hour' to dataframe
     data['departure_hour_scheduled'] = \
         data['departure_time_scheduled'].apply(helpers.round_to_hour)
+
+    # Append departure hours minus 1, 2, 3, 4 hours for query joins
+    data['departure_hour_scheduled_minus_one_hours'] = \
+         data['departure_hour_scheduled'].apply(helpers.shift_back_hours, hours=1)
+    data['departure_hour_scheduled_minus_two_hours'] = \
+         data['departure_hour_scheduled'].apply(helpers.shift_back_hours, hours=2)
+    data['departure_hour_scheduled_minus_three_hours'] = \
+         data['departure_hour_scheduled'].apply(helpers.shift_back_hours, hours=3)
+    data['departure_hour_scheduled_minus_four_hours'] = \
+         data['departure_hour_scheduled'].apply(helpers.shift_back_hours, hours=4)
+    # Append a 'arrival_hour_scheduled' to dataframe  
+
     data['arrival_hour_scheduled'] = \
         data['arrival_time_scheduled'].apply(helpers.round_to_hour)
+
+    # Append arrival hour minus 1, 2, 3, 4 hours for query joins
+    data['arrival_hour_scheduled_minus_one_hours'] = \
+         data['arrival_hour_scheduled'].apply(helpers.shift_back_hours, hours=1)
+    data['arrival_hour_scheduled_minus_two_hours'] = \
+         data['arrival_hour_scheduled'].apply(helpers.shift_back_hours, hours=2)
+    data['arrival_hour_scheduled_minus_three_hours'] = \
+         data['arrival_hour_scheduled'].apply(helpers.shift_back_hours, hours=3)
+    data['arrival_hour_scheduled_minus_four_hours'] = \
+         data['arrival_hour_scheduled'].apply(helpers.shift_back_hours, hours=4)
+
     return data
 
 
@@ -164,10 +187,6 @@ def main():
     data = handle_flight_features(data)
     print(data.info())
     print(data.head())
-    print(data[['flight_date', \
-                'departure_time_scheduled', 'departure_hour_scheduled', \
-                'arrival_time_scheduled', 'arrival_hour_scheduled']])
-
 
 if __name__ == '__main__':
     sys.exit(main())
